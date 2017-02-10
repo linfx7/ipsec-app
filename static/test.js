@@ -1,3 +1,3 @@
-function a321() {
+function test() {
     alert("hello");
 }

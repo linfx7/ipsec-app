@@ -2,33 +2,167 @@
 <html lang="en">
 
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>Welcome to Nodejs</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
     <script type="text/javascript" src="/static/test.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            initData("rules_table_1");
+            initData("rules_table_2");
+            initData("rules_table_3");
+            //tab切换功能
+            layui.use('element', function() {
+                var element = layui.element();
+            });
+        });
+
+        function initData(tableId) {
+            var insertTr = document.getElementById(tableId).getElementsByTagName('tbody')[0].insertRow(0);
+
+            var insertTd = insertTr.insertCell(0);
+            insertTd.innerHTML = "贤心";
+
+            var insertTd = insertTr.insertCell(1);
+            insertTd.innerHTML = "汉族";
+
+            var insertTd = insertTr.insertCell(2);
+            insertTd.innerHTML = "1989-10-14";
+
+            var insertTd = insertTr.insertCell(3);
+            insertTd.innerHTML =
+                "<input type='button' value='插入' class='layui-btn' onclick='insertRow(this)'/> <input type='button' value='删除' class='layui-btn' onclick='deleteRow(this)'/>";
+        }
+        //layer 弹出层 添加数据
+        function addRow(tableObject, curRow, rowData) {
+            var insertTr = tableObject.getElementsByTagName('tbody')[0].insertRow(curRow);
+
+            var insertTd = insertTr.insertCell(0);
+            insertTd.innerHTML = rowData.cell0;
+
+            var insertTd = insertTr.insertCell(1);
+            insertTd.innerHTML = rowData.cell1;
+
+            var insertTd = insertTr.insertCell(2);
+            insertTd.innerHTML = rowData.cell2;
+
+            var insertTd = insertTr.insertCell(3);
+            insertTd.innerHTML =
+                "<input type='button' value='插入' class='layui-btn' onclick='insertRow(this)'/> <input type='button' value='删除' class='layui-btn' onclick='deleteRow(this)'/>";
+        }
+        //列表中点击插入按钮
+        function insertRow(curInput) {
+            var tableObject = $(curInput).parents("table")[0];
+            var curRow = $(curInput).parent("td").parent("tr")[0].rowIndex;
+
+            layui.use("layer", function() {
+                var layer = layui.layer;
+                var code = "人物：<input type = 'text' id = 'cell0' value='' /></br>";
+                code += "民族：<input type = 'text' id = 'cell1' value='' /></br>";
+                code += "出场时间：<input type = 'text' id = 'cell2' value='' />";
+
+                var layerIndex = layer.open({
+                    content: code,
+                    btn: ["提交", "取消"],
+                    yes: function() {
+                        var cell0 = document.getElementById('cell0').value;
+                        var cell1 = document.getElementById('cell1').value;
+                        var cell2 = document.getElementById('cell2').value;
+                        var rowData = {
+                            "cell0": cell0,
+                            "cell1": cell1,
+                            "cell2": cell2
+                        };
+                        addRow(tableObject, curRow, rowData);
+                        layer.close(layerIndex);
+                    },
+                    cancel: function() {}
+                });
+            });
+        }
+        //删除当前行
+        function deleteRow(curInput) {
+            var tableObject = $(curInput).parents("table")[0];
+            var curRow = $(curInput).parent("td").parent("tr")[0].rowIndex;
+            tableObject.deleteRow(curRow);
+        }
+    </script>
 </head>
 
 <body>
-    <div id="summary">
-        <h1>It worked!</h1>
-        <h2>Congratulations on your first nodejs-powered page.</h2>
+    <div>
+
     </div>
 
-    <div id="instructions">
-        <p>
-            Of course, you haven't actually done any work yet.</code>.
-        </p>
+    <div class="layui-tab layui-tab-card">
+        <ul class="layui-tab-title">
+            <li class="layui-this">网站设置</li>
+            <li>用户管理</li>
+            <li>权限分配</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <table class="layui-table" id="rules_table_1">
+                    <colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="300">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>人物</th>
+                            <th>民族</th>
+                            <th>出场时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table" id="rules_table_2">
+                    <colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="300">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>但是</th>
+                            <th>水电费</th>
+                            <th>算法</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table" id="rules_table_3">
+                    <colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="300">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>成本</th>
+                            <th>持续</th>
+                            <th>薇恩</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-    <div id="explanation">
-        <p>
-            You're seeing this message. Get to work!
-        </p>
-    </div>
-
-    <script type="text/javascript">
-        a321();
-    </script>
 </body>
 
 </html>
