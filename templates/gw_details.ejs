@@ -56,8 +56,8 @@
     <% if (packets.length !== 0) { %>
         <% packets.forEach(function (packet) { %>
         <tr>
-            <td>packet.src</td>
-            <td>packet.dst</td>
+            <td><%= packet.src %></td>
+            <td><%= packet.dst %></td>
         </tr>
         <% }); %>
     <% } else { %>

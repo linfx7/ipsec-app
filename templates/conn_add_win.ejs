@@ -1,5 +1,5 @@
 
-<form class="layui-form">
+<form class="layui-form" style="margin-bottom:30px">
   <div class="layui-form-item">
     <label class="layui-form-label">Id</label>
     <div class="layui-input-block">
@@ -19,15 +19,19 @@
     </div>
   </div>
   <div class="layui-form-item">
+      <label class="layui-form-label">Esp</label>
+      <div class="layui-input-block">
+          <select id="connEsp" lay-verify="required" lay-filter="connEsp">
+              <option value=""></option>
+              <option value="aes256-sha256!" selected >aes256-sha256!</option>
+              <option value="null-sha256!">null-sha256!</option>
+          </select>
+      </div>
+  </div>
+  <div class="layui-form-item">
     <label class="layui-form-label">IKE</label>
     <div class="layui-input-block">
       <input type="text" value="ikev2" id="connKeyExchange" required  lay-verify="required" placeholder="请输入" autocomplete="off" class="layui-input">
-    </div>
-  </div>
-  <div class="layui-form-item">
-    <label class="layui-form-label">Esp</label>
-    <div class="layui-input-block">
-      <input type="text" id="connEsp" required  lay-verify="required" placeholder="请输入" autocomplete="off" class="layui-input">
     </div>
   </div>
 </form>
