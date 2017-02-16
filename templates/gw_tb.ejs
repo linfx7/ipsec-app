@@ -1,4 +1,7 @@
-<%　gws.forEach(function(gw) { %>
+<% if(gws.length === 0) { %>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<% } else { %>
+    <%　gws.forEach(function(gw) { %>
 <tr>
     <td><%= gw.id %></td>
     <td><%= gw.privateip %></td>
@@ -10,4 +13,5 @@
     <td><%= gw.unHundledPackets.length %></td>
     <td><input type='button' value='详情' class='layui-btn layui-btn-primary layui-btn-small' onclick='showIssuedRulesAndUnhandledPackets("<%= gws.indexOf(gw) %>")' /></td>
 </tr>
-<% }); %>
+    <% }); %>
+<% } %>

@@ -1,4 +1,7 @@
-<% conns.forEach(function(conn) { %>
+<% if(conns.length === 0) { %>
+    <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<% } else { %>
+    <% conns.forEach(function(conn) { %>
 <tr>
     <td><%= conn.name %></td>
     <td><%= conn.left %></td>
@@ -7,4 +10,5 @@
     <td><%= conn.esp %></td>
     <td><input type='button' value='删除' class='layui-btn layui-btn-primary layui-btn-small' onclick='deleteConnnByName("<%= conn.name %>")' /></td>
 </tr>
-<% }); %>
+    <% }); %>
+<% } %>
