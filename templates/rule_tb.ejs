@@ -1,0 +1,17 @@
+<%　rules.forEach(function(rule) { %>
+<tr>
+    <td><%= rule.source %>/<%=rule.srcPrefixLen%></td>
+    <td><%= rule.destination %>/<%=rule.dstPrefixLen%></td>
+    <% if (rule.action === 0) { %>
+    <td>IPsec: <%= rule.connectionName %></td>
+    <% } else if (rule.action === -1) { %>
+    <td>Discard</td>
+    <% } else { %>
+    <td>Bypass</td>
+    <% } %>
+    <td>
+        <input type='button' value='插入' class='layui-btn layui-btn-primary layui-btn-small' onclick='addRuleToIndex(false, this)' />
+        <input type='button' value='删除' class='layui-btn layui-btn-primary layui-btn-small' onclick='deleteRuleByIndex("<%= rules.indexOf(rule) %>")' />
+    </td>
+</tr>
+<% }); %>

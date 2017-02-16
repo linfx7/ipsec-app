@@ -2,32 +2,466 @@
 <html lang="en">
 
 <head>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <title>Welcome to Nodejs</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css" />
-    <script type="text/javascript" src="/static/test.js"></script>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
 </head>
 
 <body>
-    <div id="summary">
-        <h1>It worked!</h1>
-        <h2>Congratulations on your first nodejs-powered page.</h2>
+    <div>
+
     </div>
 
-    <div id="instructions">
-        <p>
-            Of course, you haven't actually done any work yet.</code>.
-        </p>
+    <div class="layui-tab layui-tab-card">
+        <ul class="layui-tab-title">
+            <li class="layui-this">网关</li>
+            <li>连接</li>
+            <li>规则</li>
+        </ul>
+        <div class="layui-tab-content">
+            <div class="layui-tab-item layui-show">
+                <table class="layui-table" id="gw_table">
+                    <!--<colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                    </colgroup>-->
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>cpu</th>
+                            <th>memory</th>
+                            <th>network</th>
+                            <th>privateip</th>
+                            <th>publicip</th>
+                            <th>issuedRules</th>
+                            <th>unhundledPackets</th>
+                            <th>details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gw_tb"></tbody>
+                </table>
+                <div style="height: 500px;" id="topology"></div>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table" id="conns_table">
+                    <!--<colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                    </colgroup>-->
+                    <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>left</th>
+                            <th>right</th>
+                            <th>keyexchange</th>
+                            <th>esp</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="conn_tb"></tbody>
+                </table>
+                <div style="text-align: center">
+                    <input type="button" value="添加连接" class="layui-btn layui-btn-primary layui-btn-small" onclick="addConn()" />
+                </div>
+            </div>
+            <div class="layui-tab-item">
+                <table class="layui-table" id="rules_table">
+                    <!--<colgroup>
+                        <col width="150">
+                        <col width="150">
+                        <col width="150">
+                        <col width="300">
+                    </colgroup>-->
+                    <thead>
+                        <tr>
+                            <th>leftsubnet</th>
+                            <th>rightsubnet</th>
+                            <th>action</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="rule_tb"></tbody>
+                </table>
+                <div style="text-align: center">
+                    <input type="button" value="添加规则" class="layui-btn layui-btn-primary layui-btn-small" onclick="addRuleToIndex(true, this)" />
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div id="explanation">
-        <p>
-            You're seeing this message. Get to work!
-        </p>
-    </div>
-
+    
+    <script type="text/javascript" src="/static/jquery-3.1.1.min.js"></script>
+    <script type="text/javascript" src="/static/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/ejs_production.js"></script>
+    <script type="text/javascript" src="/static/data.js"></script>
+    <script src="/static/qunee-min.js"></script>
+    <script type="text/javascript" src="/static/graph.js"></script>
     <script type="text/javascript">
-        a321();
+        //获取数据
+        var connNameSelect = new Array();
+
+        // gw.id-gw.publicip, gw.publicip
+        // 1-192.168.0.1, 192.168.0.1
+        var localGWList = new Map();
+        // conn.name, conn
+        var avalConns = new Map();
+        // leftsubnet-rightsubnet-conn.name
+        // 10.1.0.0-10.2.0.0-testname, rightip
+        var onlineTnls = new Map();
+        var oldOnlineTnls = new Map();
+
+        layui.use('element', function() {
+            var element = layui.element()
+        });
+
+        $(document).ready(function() {
+            //初始化数据
+            refreshConnectTable();
+            refreshRuleTable();
+            refreshGW();
+
+            // 初始化网络拓扑
+            initGraph('topology')
+            initLocalNetwork();
+
+            //每2s定时刷新 gw table
+            setInterval(refreshGW, 2000);
+        });
+
+        function refreshTopology(gatewayList) {
+            // remove offline local gateways
+            localGWList.forEach(function(value, key) {
+                var needremove = true;
+                gatewayList.forEach(function(gw) {
+                    if (gw.id + '-' + gw.publicip === key)
+                        needremove = false;
+                });
+                if (needremove) {
+                    removeLocalGateway(value);
+                    localGWList.delete(key);
+                }
+            });
+            oldOnlineTnls = onlineTnls;
+            onlineTnls = new Map();
+            gatewayList.forEach(function(gw) {
+                // add newly online local gateways
+                if (!localGWList.has(gw.id + '-' + gw.publicip)) {
+                    addLocalGateway('Gateway-' + gw.id, gw.publicip);
+                    localGWList.set(gw.id + '-' + gw.publicip, gw.publicip);
+                }
+                // update online tunnel list
+                gw.issuedRules.forEach(function(rule) {
+                    var tmpo = new Object();
+                    tmpo.left = gw.publicip;
+                    tmpo.right = avalConns.get(rule.connectionName).right;
+                    tmpo.conn = rule.connectionName;
+                    onlineTnls.set(rule.source + '-' + rule.destination + '-' + rule.connectionName, tmpo);
+                });
+            });
+
+            // remove offline tunnels
+            oldOnlineTnls.forEach(function(value, key) {
+                if (!onlineTnls.has(key)) {
+                    removeTunnel(key);
+                    removeRemote(value.right);
+                }
+            });
+            // add newly online tunnels
+            onlineTnls.forEach(function(value, key) {
+                if (!oldOnlineTnls.has(key)) {
+                    addRemote(value.right);
+                    addTunnel(value.left, value.right, value.conn, key);
+                }
+            });
+
+        }
+
+        //刷新 conn 列表
+        function refreshConnectTable() {
+
+            getConns(function(connList) {
+                var activeConns = connList.active;
+                //清空connselect数组
+                connNameSelect.splice(0, connNameSelect.length);
+                avalConns.clear();
+                activeConns.forEach(function(conn) {
+                    connNameSelect.push(conn.name);
+                    avalConns.set(conn.name, conn);
+                })
+
+                new EJS({
+                    url: 'templates/conn_tb.ejs'
+                }).update('conn_tb', {
+                    conns: activeConns
+                });
+            });
+        }
+
+        //刷新 rule 列表
+        function refreshRuleTable() {
+
+            getRules(function(ruleList) {
+                console.log("rules:", ruleList);
+
+                new EJS({
+                    url: 'templates/rule_tb.ejs'
+                }).update('rule_tb', {
+                    rules: ruleList
+                });
+            });
+        }
+
+        //添加连接
+        function addConn() {
+
+            layui.use("layer", function() {
+                var layer = layui.layer;
+                var code = new EJS({
+                    url: 'templates/conn_add_win.ejs'
+                }).render();
+
+                var layerIndex = layer.open({
+                    area: '400px',
+                    content: code,
+                    btn: ["submit", "cancel"],
+                    btnAlign: 'c',
+                    yes: function() {
+                        var connName = document.getElementById('connName').value;
+                        var connKeyExchange = document.getElementById('connKeyExchange').value;
+                        var connLeft = document.getElementById('connLeft').value;
+                        var connRight = document.getElementById('connRight').value;
+                        var connEsp = document.getElementById('connEsp').value;
+                        //添加到 选择框里
+                        // connNameSelect.push(connName);
+
+                        var connData = {
+                            name: connName,
+                            connectionType: "active",
+                            keyexchange: connKeyExchange,
+                            authby: "secret",
+                            left: connLeft,
+                            leftid: "@moon.strongswan.org",
+                            leftfirewall: "yes",
+                            right: connRight,
+                            rightid: "@sun.strongswan.org",
+                            esp: connEsp,
+                            auto: "add"
+                        };
+                        addConnData(connData);
+                        layer.close(layerIndex);
+                    },
+                    cancel: function() {},
+                    success: function() {
+                        //为弹出层加载form组件
+                        layui.use('form', function() {
+                            var form = layui.form();
+                            form.render(); //更新全部
+                        });
+                    }
+                });
+            });
+        }
+
+        //layer 弹出层 添加连接
+        function addConnData(connData) {
+            console.log("connData:" + connData);
+            //后台添加数据
+            putConn(connData, function(result) {
+                console.log("conn add result: " + result);
+                //前台刷新
+                refreshConnectTable();
+            });
+
+        }
+
+        //添加rule
+        //isEnd : 是否添加到最后
+        //当isEnd=false,curInput为当前点击的input按钮的对象
+        function addRuleToIndex(isEnd, curInput) {
+            layui.use("layer", function() {
+                var layer = layui.layer;
+                var code = new EJS({
+                    url: 'templates/rule_add_win.ejs'
+                }).render({
+                    connNames: connNameSelect,
+                    addRuleLayer: layer
+                });
+
+                // layer.ready(function() {
+                //     layui.use('form', function() {
+                //         var form = layui.form();
+                //         form.render();
+                //         form.on('select(action)', function(data) {
+                //             var connNameSelectDiv = document.getElementById('connNameSelectDiv');
+                //             var action = data.value;
+                //             if (action == '0') {
+                //                 connNameSelectDiv.style.display = "block";
+                //             } else {
+                //                 connNameSelectDiv.style.display = "none";
+                //             }
+                //         });
+                //     });
+                // });
+
+                var layerIndex = layer.open({
+                    area: '500px',
+                    scrollbar: false,
+                    content: code,
+                    btn: ["submit", "cancel"],
+                    btnAlign: 'c',
+                    yes: function() {
+                        var ruleSource = document.getElementById('source').value;
+                        var ruleSrcPre = document.getElementById('srcPrefixLen').value;
+                        var ruleDest = document.getElementById('destination').value;
+                        var ruleDestPre = document.getElementById('dstPrefixLen').value;
+                        var ruleConn = document.getElementById('connectionName').value;
+                        var ruleAction = document.getElementById('action').value;
+
+                        var ruleData = {
+                            source: ruleSource,
+                            srcPrefixLen: ruleSrcPre,
+                            destination: ruleDest,
+                            dstPrefixLen: ruleDestPre,
+                            action: ruleAction,
+                            connectionName: ruleConn
+                        };
+                        addRuleData(isEnd, curInput, ruleData);
+                        layer.close(layerIndex);
+                    },
+                    cancel: function() {},
+                    success: function() {
+                        layui.use('form', function() {
+                            var form = layui.form();
+                            form.render();
+                            form.on('select(action)', function(data) {
+                                var connNameSelectDiv = document.getElementById('connNameSelectDiv');
+                                var action = data.value;
+                                if (action == '0') {
+                                    connNameSelectDiv.style.display = "block";
+                                } else {
+                                    connNameSelectDiv.style.display = "none";
+                                }
+                            });
+                        });
+                    }
+                });
+            });
+        }
+        //添加rule数据
+        function addRuleData(isEnd, curInput, ruleData) {
+
+            if (isEnd) {
+                //添加后台数据
+                addRule(ruleData, function(result) {
+                    console.log("add rule result:" + result);
+                    //刷新rule列表
+                    refreshRuleTable();
+                });
+            } else {
+                //在指定位置添加
+                var tableObject = $(curInput).parents("table")[0];
+                var curRow = $(curInput).parent("td").parent("tr")[0].rowIndex;
+
+                //添加后台数据
+                var rowsLength = tableObject.rows.length;
+                if (curRow >= rowsLength) {
+                    addRule(ruleData, function(result) {
+                        console.log("insert rule result: " + result);
+                        //刷新rule列表
+                        refreshRuleTable();
+                    });
+                } else {
+                    insertRule(ruleData, curRow, function(result) {
+                        console.log("insert rule result: " + result);
+                        //刷新rule列表
+                        refreshRuleTable();
+                    });
+                }
+            }
+
+
+        }
+
+        //rule列表的弹出层中，根据当前action的选择，操作connectName的显隐
+        function changeConnNameSelect() {
+            var connNameSelectDiv = document.getElementById('connNameSelectDiv');
+            var actionSelect = document.getElementById('action');
+            var selectedValue = actionSelect.options[actionSelect.selectedIndex].value;
+            if (selectedValue == 0) {
+                connNameSelectDiv.style.display = "block";
+            } else {
+                connNameSelectDiv.style.display = "none";
+            }
+        }
+        //删除单条conn
+        function deleteConnnByName(connName) {
+            deleteConn(connName, function(result) {
+                console.log("delete conn result: " + result);
+                if (result === "in use") {
+
+                } else if (result === "success") {
+                    refreshConnectTable();
+                }
+            })
+        }
+        //删除 rule
+        function deleteRuleByIndex(index) {
+            deleteRule(index, function(result) {
+                console.log("delete rule result: " + result);
+                refreshRuleTable();
+            })
+        }
+
+        //刷新 gw 状态
+        function refreshGW() {
+
+            getGateways(function(gatewayList) {
+                console.log("gateways:", gatewayList);
+                
+                new EJS({
+                    url: 'templates/gw_tb.ejs'
+                }).update('gw_tb', {
+                    gws: gatewayList
+                });
+
+                // update topology
+                refreshTopology(gatewayList);
+            });
+        }
+        // 展示gw中issuedRules 和 unhandledPackets
+        function showIssuedRulesAndUnhandledPackets(index) {
+            getGateways(function(gatewayList) {
+                var ruleList = gatewayList[index].issuedRules;
+                var packetList = gatewayList[index].unHundledPackets
+                layui.use("layer", function() {
+                    var layer = layui.layer;
+                    var code = new EJS({
+                        url: 'templates/gw_details.ejs'
+                    }).render({
+                        rules: ruleList,
+                        packets: packetList
+                    });
+                    var layerIndex = layer.open({
+                        area: '500px',
+                        content: code,
+                        btn: ["close"],
+                        btnAlign: 'c',
+                        cancel: function() {}
+                    });
+                });
+            });
+        }
     </script>
 </body>
 

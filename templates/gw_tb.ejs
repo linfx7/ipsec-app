@@ -1,0 +1,13 @@
+<%　gws.forEach(function(gw) { %>
+<tr>
+    <td><%= gw.id %></td>
+    <td><%= gw.privateip %></td>
+    <td><%= gw.publicip %></td>
+    <td><%= gw.network %></td>
+    <td><%= gw.cpu %></td>
+    <td><%= gw.memory %></td>
+    <td><%= gw.issuedRules.length %></td>
+    <td><%= gw.unHundledPackets.length %></td>
+    <td><input type='button' value='详情' class='layui-btn layui-btn-primary layui-btn-small' onclick='showIssuedRulesAndUnhandledPackets("<%= gws.indexOf(gw) %>")' /></td>
+</tr>
+<% }); %>

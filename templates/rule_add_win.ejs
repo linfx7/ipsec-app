@@ -1,0 +1,47 @@
+<form class="layui-form" >
+     <div class="layui-form-item">
+        <label class="layui-form-label">Action</label>
+        <div class="layui-input-block">
+            <select id="action" lay-verify="required" lay-filter="action">
+                <option value=""></option>
+                <option value="0" selected >IPsec</option>
+                <option value="-1">Discard</option>
+                <option value="-2">Bypass</option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item" id="connNameSelectDiv">
+        <label class="layui-form-label">ConnId</label>
+        <div class="layui-input-block">
+            <select id="connectionName">
+                <% connNames.forEach(function(connName){ %>
+                <option value="<%= connName %>"><%= connName %></option>
+                <% }) %>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">LeftSubnet</label>
+            <div class="layui-input-inline" style="width: 150px;">
+                <input type="text" id = "source" placeholder="SourceIp" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-form-mid">/</div>
+            <div class="layui-input-inline" style="width: 60px;">
+                <input type="number" id="srcPrefixLen" lay-verify="number" min="0" max="32" placeholder="Mask" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">RightSubnet</label>
+            <div class="layui-input-inline" style="width: 150px;">
+                <input type="text" id="destination" placeholder="DestinationIp" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-form-mid">/</div>
+            <div class="layui-input-inline" style="width: 60px;">
+                <input type="number" id="dstPrefixLen" lay-verify="number" min="0" max="32" placeholder="Mask" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+    </div>
+</form>

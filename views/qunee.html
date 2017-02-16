@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello Qunee for HTML5</title>
+    <meta charset="utf-8">
+</head>
+<body>
+<div style="height: 500px;" id="canvas"/>
+<script src="/static/qunee-min.js"></script>
+<script src="/static/graph.js"></script>
+<script>
+    initGraph('canvas')
+    initLocalNetwork();
+    addLocalGateway('Gateway-1', '192.168.0.1');
+    addLocalGateway('Gateway-2', '192.168.1.1');
+    removeLocalGateway('192.168.1.1');
+
+    addRemote('192.168.2.31');
+    addRemote('192.168.2.1');
+
+    addTunnel('192.168.0.1', '192.168.2.1', 'conn1', '3123');
+
+    // removeTunnel('3123')
+
+</script>
+</body>
+</html>

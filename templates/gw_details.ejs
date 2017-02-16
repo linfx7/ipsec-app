@@ -1,0 +1,70 @@
+<fieldset class='layui-elem-field layui-field-title' style='margin-top: 20px;'>
+    <legend>规则列表</legend>
+</fieldset>
+<table class='layui-table' id='gw_issrules_table'>
+    <colgroup>
+        <col width='150'>
+        <col width='150'>
+        <col width='150'>
+    </colgroup>
+    <thead>
+        <tr>
+            <th>leftsubnet</th>
+            <th>rightsubnet</th>
+            <th>connectName</th>
+        </tr>
+    </thead>
+    <tbody>
+    <% if (rules.length !== 0) { %>
+        <% rules.forEach(function (rule) { %>
+            <tr>
+                <td><%= rule.source %>/<%=rule.srcPrefixLen%></td>
+                <td><%= rule.destination %>/<%=rule.dstPrefixLen%></td>
+            <% if (rule.action === 0) { %>
+                <td>IPsec: <%= rule.connectionName %></td>
+            <% } else if (rule.action === -1) { %>
+                <td>Discard</td>
+            <% } else { %>
+                <td>Bypass</td>
+            <% } %>
+            </tr>
+        <% }); %>
+    <% } else { %>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    <% } %>
+    </tbody>
+</table><br/>
+<fieldset class='layui-elem-field layui-field-title' style='margin-top: 20px;'>
+    <legend>未处理列表</legend>
+</fieldset>
+<table class='layui-table' id='gw_unhandled_table'>
+    <colgroup>
+        <col width='150'>
+        <col width='150'>
+    </colgroup>
+    <thead>
+        <tr>
+            <th>src</th>
+            <th>dst</th>
+        </tr>
+    </thead>
+    <tbody>
+    <% if (packets.length !== 0) { %>
+        <% packets.forEach(function (packet) { %>
+        <tr>
+            <td>packet.src</td>
+            <td>packet.dst</td>
+        </tr>
+        <% }); %>
+    <% } else { %>
+        <tr>
+            <td></td>
+            <td></td>
+        </tr>
+    <% } %>
+    </tbody>
+</table>
